@@ -135,6 +135,34 @@ define function player-won? (board :: <board>) => (won? :: <boolean>)
   size(board.board-enemies) = 0
 end function;
 
+define function final-screen (text)
+  tb-clear();
+  block (exit)
+    while (#t)
+      let x = random(tb-width());
+      let y = random(tb-height());
+      tb-print(x, y, text, fg: $TB-RED);
+      tb-present();
+
+      let (t, ev) = tb-poll-event();
+      select (ev.event-type)
+        $TB-EVENT-KEY
+          => exit();
+        $TB-EVENT-RESIZE
+          => /* Resize board */;
+      end select;
+    end while;
+  end block;
+end function;
+
+define function victory-screen ()
+  final-screen("YOU WON!!!");
+end function;
+
+define function defeat-screen ()
+  final-screen("YOU LOST!!!");
+end function;
+
 define function main (name :: <string>, arguments :: <vector>)
   let player = make(<player>, position: pair(5, 5));
   let enemies = #[];
@@ -179,9 +207,9 @@ define function main (name :: <string>, arguments :: <vector>)
     end;
   end block;
   if (has-lost)
-    format-out("YOU LOST\n");
+    defeat-screen();
   else
-    format-out("YOU WON\n");
+    victory-screen();
   end;
   tb-shutdown();
   exit-application(0);
