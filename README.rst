@@ -11,5 +11,5 @@ Usage
 
 To move use the arrow keys.
 
-At the moment the robots move only diagonally, while the player moves only
-horizontally or vertically.
+At the moment the player moves only horizontally or vertically.
+

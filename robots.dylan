@@ -96,8 +96,8 @@ define function move-enemies (board :: <board>)
        i from 0)
     let dx = head(enemy) - head(pos);
     let dy = tail(enemy) - tail(pos);
-    let mx = head(enemy) + if (dx < 0) 1 else -1 end if;
-    let my = tail(enemy) + if (dy < 0) 1 else -1 end if;
+    let mx = head(enemy) + if (dx < 0) 1 elseif (dx = 0) 0 else -1 end if;
+    let my = tail(enemy) + if (dy < 0) 1 elseif (dy = 0) 0 else -1 end if;
     board.board-enemies[i] := pair(mx, my);
   end for;
 end function;
