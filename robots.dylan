@@ -77,16 +77,23 @@ define function move (player :: <player>, direction) => (moved? :: <boolean>)
   #t
 end;
 
-define function handle-event-key (event, board :: <board>) => (moved? :: <boolean>)
+define function teleport (board :: <board>)
+  let x = random(board.board-width);
+  let y = random(board.board-height);
+  player-position(board.board-player) := pair(x, y);
+end;
+
+define function move-player(ev, board)
   let pos = player-position(board.board-player);
   let x = head(pos);
   let y = tail(pos);
-  select (event.event-key)
-    $TB-KEY-ARROW-UP => if (y > 0) move(board.board-player, #"up") else #f end;
-    $TB-KEY-ARROW-DOWN => if (y < board.board-height) move(board.board-player, #"down") else #f end;
-    $TB-KEY-ARROW-LEFT => if (x > 0) move(board.board-player, #"left") else #f end;
-    $TB-KEY-ARROW-RIGHT => if (x < board.board-width) move(board.board-player, #"right") else #f end;
-    otherwise => #f;
+  select (ev.event-ch)
+    as(<integer>, 'k') => if (y > 0) move(board.board-player, #"up") end;
+    as(<integer>, 'j') => if (y < board.board-height) move(board.board-player, #"down") end;
+    as(<integer>, 'h') => if (x > 0) move(board.board-player, #"left") end;
+    as(<integer>, 'l') => if (x < board.board-width) move(board.board-player, #"right") end;
+    as(<integer>, '3') => teleport(board);
+    otherwise => ;
   end
 end function;
 
@@ -102,7 +109,7 @@ define function move-enemies (board :: <board>)
   end for;
 end function;
 
-define function collide-enemies (board :: <board>)
+define function collide! (board :: <board>)
   let enemies = board.board-enemies;
   let new-enemies = #[];
   // FIXME: Crappy algo
@@ -175,8 +182,7 @@ define function main (name :: <string>, arguments :: <vector>)
                    enemies: enemies,
                    player: player);
   tb-init();
-  let has-lost = #f;
-  block (exit)
+  let won? = block (exit)
     while (#t)
       tb-clear();
       draw(board);
@@ -185,32 +191,31 @@ define function main (name :: <string>, arguments :: <vector>)
       let (t, ev) = tb-poll-event();
       select (ev.event-type)
         $TB-EVENT-KEY
-        => if (ev.event-key = $TB-KEY-ESC)
-             exit();
-           else
-             if (handle-event-key(ev, board))
-               move-enemies(board);
-               collide-enemies(board);
-               if (player-lost?(board))
-                 has-lost := #t;
-                 exit();
-               end;
-               if (player-won?(board))
-                 has-lost := #f;
-                 exit();
-               end;
+          => if (ev.event-key = $TB-KEY-ESC)
+               exit();
+             else
+               case (player-won?(board))
+                      => exit(#t);
+                    (player-lost?(board))
+                      => exit(#f);
+                    otherwise
+                      => move-enemies(board);
+                         move-player(ev, board);
+                         collide!(board);
+               end case;
              end if;
-           end if;
         $TB-EVENT-RESIZE
           => /* Resize board */;
       end select;
     end;
   end block;
-  if (has-lost)
-    defeat-screen();
-  else
+
+  if (won?)
     victory-screen();
+  else
+    defeat-screen();
   end;
+
   tb-shutdown();
   exit-application(0);
 end function main;
