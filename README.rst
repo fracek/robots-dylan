@@ -6,8 +6,10 @@ A Dylan implementation of the Robots game.
 Usage
 -----
 
-    make
-    ./_build/bin/robots
+To compile and run::
+
+  make
+  ./_build/bin/robots
 
 To move use the arrow keys.
 
